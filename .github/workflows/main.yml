@@ -95,8 +95,8 @@ jobs:
       - name: Build and push backend
         uses: docker/build-push-action@v4
         with:
-          context: ./backend/foodgram_backend/
-          file: ./backend/foodgram_backend/Dockerfile
+          context: ./backend/
+          file: ./backend/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
 
