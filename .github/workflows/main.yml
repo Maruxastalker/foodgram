@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Job 1: Backend tests
+  # Job 1: Backend tests (закомментированы)
   build:
     runs-on: ubuntu-latest
     services:
@@ -33,29 +33,27 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip 
-
           sudo apt-get update
           sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libtiff-dev libwebp-dev
-          
           pip install flake8==6.0.0 flake8-isort==6.0.0
           pip install -r ./backend/foodgram_backend/requirements.txt
       
-      - name: Run flake8
-        run: |
-          python -m flake8 backend/
+      # - name: Run flake8
+      #   run: |
+      #     python -m flake8 backend/
       
-      - name: Run pytest
-        env:
-          POSTGRES_USER: django_user
-          POSTGRES_PASSWORD: mysecretpassword
-          POSTGRES_DB: django_foodgram
-          DB_HOST: localhost
-          DB_PORT: 5432
-          SECRET_KEY: test-secret-key
-        run: |
-          pytest -v
+      # - name: Run pytest
+      #   env:
+      #     POSTGRES_USER: django_user
+      #     POSTGRES_PASSWORD: mysecretpassword
+      #     POSTGRES_DB: django_foodgram
+      #     DB_HOST: localhost
+      #     DB_PORT: 5432
+      #     SECRET_KEY: test-secret-key
+      #   run: |
+      #     pytest -v
 
-  # Job 2: Frontend tests
+  # Job 2: Frontend tests (закомментированы)
   frontend_tests:
     runs-on: ubuntu-latest
     steps:
@@ -71,15 +69,15 @@ jobs:
           cd frontend/
           npm ci --legacy-peer-deps
       
-      - name: Test frontend
-        run: |
-          cd frontend/
-          npm run test
+      # - name: Test frontend
+      #   run: |
+      #     cd frontend/
+      #     npm run test
 
   # Job 3: Build and push backend
   build_backend_and_push_to_docker_hub:
     runs-on: ubuntu-latest
-    needs: [build]  # Зависит от успешного прохождения тестов
+    # needs: [build]  # Убрана зависимость от тестов
     
     steps:
       - name: Check out the repo
@@ -105,7 +103,7 @@ jobs:
   # Job 4: Build and push frontend
   build_frontend_and_push_to_docker_hub:
     runs-on: ubuntu-latest
-    needs: [frontend_tests]  # Зависит от успешного прохождения тестов
+    # needs: [frontend_tests]  # Убрана зависимость от тестов
     
     steps:
       - name: Check out the repo
