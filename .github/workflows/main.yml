@@ -36,7 +36,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libtiff-dev libwebp-dev
           pip install flake8==6.0.0 flake8-isort==6.0.0
-          pip install -r ./backend/foodgram_backend/requirements.txt
+          pip install -r ../backend/foodgram_backend/requirements.txt
       
       # - name: Run flake8
       #   run: |
