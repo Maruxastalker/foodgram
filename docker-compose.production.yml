@@ -28,6 +28,14 @@ services:
       db:
         condition: service_healthy
 
+  frontend:
+    container_name: foodgram-front
+    image: markuser4556/foodgram_frontend:latest
+    restart: always
+    build: ../frontend
+    volumes:
+      - ../frontend/:/app/result_build/
+
   nginx:
     container_name: foodgram-proxy
     image: nginx:1.25-alpine
