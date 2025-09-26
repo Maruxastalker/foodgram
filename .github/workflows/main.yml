@@ -75,7 +75,7 @@ jobs:
   # Job 3: Build and push backend
   build_backend_and_push_to_docker_hub:
     runs-on: ubuntu-latest
-    needs: [backend_tests]  # Зависит от успешного прохождения тестов
+    needs: [build]  # Зависит от успешного прохождения тестов
     
     steps:
       - name: Check out the repo
@@ -183,7 +183,5 @@ jobs:
             sudo docker compose -f docker-compose.production.yml pull
             sudo docker compose -f docker-compose.production.yml down
             sudo docker compose -f docker-compose.production.yml up -d
-            for i in {1..5}; do
-              sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate && break || sleep 5
-            done
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate && break || sleep 5
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
