@@ -153,8 +153,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     pagination_class = CustomPagination
     permission_classes = [IsAuthenticatedOrReadOnly]
-    filter_backends = [filters.BaseFilterBackend]
-    filterset_class = RecipeFilter
+    #filter_backends = [filters.BaseFilterBackend]
+    #filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
