@@ -21,7 +21,7 @@ SECRET_KEY = 'django-insecure-6fh2u@z4x^gok@!_72+1-ws_s#tgn1!0=zh8^a@d+im=wsphyc
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['84.201.136.206', 'localhost', '127.0.0.1','foodgram-mark.myvnc.com', 'backend']
+ALLOWED_HOSTS = ['84.201.136.206', 'localhost', '127.0.0.1','foodgram-mark.myvnc.com']
 
 
 AUTH_USER_MODEL = 'foodgram.CustomUser'
