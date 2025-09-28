@@ -34,7 +34,7 @@ services:
     restart: always
     build: ../frontend
     volumes:
-      - ../frontend/:/app/result_build/
+      - ../frontend/:/app/
 
   nginx:
     container_name: foodgram-proxy
@@ -45,7 +45,7 @@ services:
     volumes:
       - static:/static/
       - media:/media/
-      - ../frontend/build:/usr/share/nginx/html/
+      - ../frontend/result_build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend
