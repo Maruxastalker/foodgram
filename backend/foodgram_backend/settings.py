@@ -21,7 +21,7 @@ SECRET_KEY = 'django-insecure-6fh2u@z4x^gok@!_72+1-ws_s#tgn1!0=zh8^a@d+im=wsphyc
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['84.201.136.206', 'localhost', '127.0.0.1', 'foodgram-mark.myvnc.com']
+ALLOWED_HOSTS = ['84.201.136.206', 'localhost', '127.0.0.1', 'foodgram-mark.myvnc.com', 'backend']
 
 
 AUTH_USER_MODEL = 'foodgram.CustomUser'
@@ -134,7 +134,7 @@ STATIC_ROOT = BASE_DIR / 'collect_static'
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = BASE_DIR / '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
