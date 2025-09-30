@@ -2,51 +2,38 @@ volumes:
   pg_data:
   static:
   media:
+  frontend_static:
 
 services:
   db:
-    image: postgres:13-alpine
+    image: postgres:13
     env_file: .env
-    restart: always
     volumes:
       - pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
-    container_name: foodgram-back
-    image: markuser4556/foodgram_backend:latest
-    restart: always
+    image: markuser4556/foodgram_backend
     env_file: .env
     volumes:
-      - static:/collect_static/
+      - static:/backend_static/
       - media:/media/
     depends_on:
-      db:
-        condition: service_healthy
-
+      - db
   frontend:
-    container_name: foodgram-front
-    image: markuser4556/foodgram_frontend:latest
-    restart: always
-    build: ../frontend
+    image: markuser4556/foodgram_frontend
+    env_file: .env
+    command: cp -r /app/build/. /frontend_static/
     volumes:
-      - ../frontend/:/app/
-
-  nginx:
-    container_name: foodgram-proxy
-    image: nginx:1.25-alpine
-    restart: always
+      - frontend_static:/frontend_static/
+  gateway:
+    image: markuser4556/foodgram_gateway
+    env_file: .env
     ports:
-      - "7000:80"
+      - 7000:80
     volumes:
       - static:/static/
       - media:/media/
-      - ../frontend/build:/usr/share/nginx/html/
-      - ../docs/:/usr/share/nginx/html/api/docs/
+      - frontend_static:/frontend_static/
+      - ./docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend
       - frontend
