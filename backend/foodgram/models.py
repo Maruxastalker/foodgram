@@ -23,7 +23,7 @@ class CustomUser(AbstractUser):
         help_text='Обязательное поле. 150 символов максимум.'
     )
     last_name = models.CharField(
-        'last name', 
+        'last name',
         max_length=150,
         help_text='Обязательное поле. 150 символов максимум.'
     )
@@ -46,7 +46,7 @@ class Tag(models.Model):
     slug = models.SlugField(
         unique=True,
         verbose_name='Уникальный идентификатор',
-        help_text='Уникальный идентификатор для URL (только латинские буквы, цифры, дефисы и подчеркивания)'
+        help_text='Уникальный идентификатор для URL'
     )
 
     class Meta:
@@ -67,7 +67,7 @@ class Ingredient(models.Model):
     measurement_unit = models.CharField(
         max_length=20,
         verbose_name='Единица измерения',
-        help_text='Введите единицу измерения (например: грамм, штука, стакан, ложка)'
+        help_text='Введите единицу измерения'
     )
 
     class Meta:
@@ -121,8 +121,9 @@ class Recipe(models.Model):
         verbose_name='Время приготовления (в минутах)',
         help_text='Введите время приготовления в минутах (не менее 1 минуты)'
     )
-    created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-
+    created = models.DateTimeField(
+        auto_now_add=True, verbose_name='Дата создания'
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -133,9 +134,8 @@ class Recipe(models.Model):
         return self.name
 
 
-
 class IngredientAmount(models.Model):
-    """Промежуточная модель для связи рецепта и ингредиента с указанием количества"""
+    """Промежуточная модель для связи рецепта и ингредиента"""
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -170,6 +170,7 @@ class Favorite(models.Model):
                 name='unique_favorite'
             )
         ]
+
 
 class Subscription(models.Model):
     user = models.ForeignKey(
