@@ -22,7 +22,7 @@ services:
     restart: always
     env_file: .env
     volumes:
-      - static:/collect_static/
+      - static:/app/collect_static/
       - media:/media/
     depends_on:
       db:
@@ -45,7 +45,7 @@ services:
     volumes:
       - static:/static/
       - media:/media/
-      - ../frontend/result_build:/usr/share/nginx/html/
+      - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend
