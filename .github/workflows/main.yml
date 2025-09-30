@@ -1,15 +1,12 @@
-name: CI for Foodgram project
+name: CI/CD for Foodgram project
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
-  # Job 1: Backend tests (закомментированы)
-  build:
+  build_backend_and_push_to_docker_hub:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -36,53 +33,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libtiff-dev libwebp-dev
           pip install flake8==6.0.0 flake8-isort==6.0.0
-          pip install -r ../backend/foodgram_backend/requirements.txt
+          pip install -r backend/requirements.txt
       
-      # - name: Run flake8
-      #   run: |
-      #     python -m flake8 backend/
-      
-      # - name: Run pytest
-      #   env:
-      #     POSTGRES_USER: django_user
-      #     POSTGRES_PASSWORD: mysecretpassword
-      #     POSTGRES_DB: django_foodgram
-      #     DB_HOST: localhost
-      #     DB_PORT: 5432
-      #     SECRET_KEY: test-secret-key
-      #   run: |
-      #     pytest -v
-
-  # Job 2: Frontend tests (закомментированы)
-  frontend_tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Set up nodeJS
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      
-      - name: Install dependencies
+      - name: Run flake8
         run: |
-          cd frontend/
-          npm ci --legacy-peer-deps
-      
-      # - name: Test frontend
-      #   run: |
-      #     cd frontend/
-      #     npm run test
+          python -m flake8 backend/
 
-  # Job 3: Build and push backend
-  build_backend_and_push_to_docker_hub:
-    runs-on: ubuntu-latest
-    # needs: [build]  # Убрана зависимость от тестов
-    
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
-      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       
@@ -100,15 +56,26 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
 
-  # Job 4: Build and push frontend
   build_frontend_and_push_to_docker_hub:
     runs-on: ubuntu-latest
-    # needs: [frontend_tests]  # Убрана зависимость от тестов
-    
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
       
+      - name: Set up nodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Install dependencies
+        run: |
+          cd frontend/
+          npm ci --legacy-peer-deps
+      
+      - name: Test frontend
+        run: |
+          cd frontend/
+          npm run test
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       
@@ -126,10 +93,8 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:latest
 
-  # Job 5: Build and push gateway (nginx)
   build_gateway_and_push_to_docker_hub:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -151,7 +116,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_gateway:latest
 
-  # Job 6: Deploy to server
   deploy:
     runs-on: ubuntu-latest
     needs: 
@@ -185,5 +149,5 @@ jobs:
             sudo docker compose -f docker-compose.production.yml pull
             sudo docker compose -f docker-compose.production.yml down
             sudo docker compose -f docker-compose.production.yml up -d
-            sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate && break || sleep 5
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
