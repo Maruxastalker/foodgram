@@ -1,6 +1,7 @@
+# Исправленный docker-compose.production.yml
 volumes:
   pg_data:
-  static:
+  backend_static:  # Добавлен отдельный volume для бэкенд статики
   media:
   frontend_static:
 
@@ -10,29 +11,32 @@ services:
     env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
+  
   backend:
     image: markuser4556/foodgram_backend
     env_file: .env
     volumes:
-      - static:/backend_static/
+      - backend_static:/backend_static/  # Для статики бэкенда
       - media:/media/
     depends_on:
       - db
+  
   frontend:
     image: markuser4556/foodgram_frontend
     env_file: .env
-    command: cp -r /app/build/. /frontend_static/
+    command: sh -c "cp -r /app/build/. /frontend_static/ && chmod -R 755 /frontend_static/"
     volumes:
       - frontend_static:/frontend_static/
+  
   gateway:
     image: markuser4556/foodgram_gateway
     env_file: .env
     ports:
       - 7070:80
     volumes:
-      - static:/static/
-      - media:/media/
+      - backend_static:/backend_static/
       - frontend_static:/frontend_static/
+      - media:/media/
       - ./docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend
