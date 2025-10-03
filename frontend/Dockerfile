@@ -5,9 +5,4 @@ COPY package*.json ./
 RUN npm install --legacy-peer-deps
 COPY . ./
 RUN npm run build
-# CMD cp -r build result_build
-
-FROM nginx:stable-alpine
-COPY --from=build-stage /app/build /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD cp -r /app/build/. /frontend_static/
