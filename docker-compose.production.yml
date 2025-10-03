@@ -24,7 +24,7 @@ services:
   frontend:
     image: markuser4556/foodgram_frontend
     env_file: .env
-    command: sh -c "cp -r /app/build/. /frontend_static/ && chmod -R 755 /frontend_static/"
+    command: sh -c "cp -r /app/build/* /frontend_static/"
     volumes:
       - frontend_static:/frontend_static/
   
