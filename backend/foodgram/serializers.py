@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import transaction
 from djoser.serializers import UserSerializer as DjoserUserSerializer
+from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -23,25 +24,35 @@ from .models import (
 User = get_user_model()
 
 
-class UserSerializer(DjoserUserSerializer):
+class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = DjoserUserSerializer.Meta.fields + (
-            'avatar',
-            'is_subscribed'
-        )
+        fields = ('id', 'email', 'username', 'first_name', 'last_name', 'avatar', 'is_subscribed')
         read_only_fields = ('id', 'is_subscribed')
 
     def get_is_subscribed(self, author):
         user = self.context.get('request').user
-        return (
-            user.is_authenticated
-            and Subscription.objects.filter(
-                author=author, subscriber=user
-            ).exists()
-        )
+        if not user or not user.is_authenticated:
+            return False
+        return Subscription.objects.filter(
+            author=author, subscriber=user
+        ).exists()
+
+
+class UserCreateSerializer(BaseUserCreateSerializer):
+    first_name = serializers.CharField(required=True, max_length=150)
+    last_name = serializers.CharField(required=True, max_length=150)
+
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'username', 'first_name', 'last_name', 'password')
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
 
 
 class AvatarSerializer(serializers.ModelSerializer):

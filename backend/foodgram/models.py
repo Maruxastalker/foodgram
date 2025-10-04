@@ -54,11 +54,13 @@ class CustomUser(AbstractUser):
     first_name = models.CharField(
         'first name',
         max_length=150,
+        blank=False,
         help_text='Обязательное поле. 150 символов максимум.'
     )
     last_name = models.CharField(
         'last name',
         max_length=150,
+        blank=False,
         help_text='Обязательное поле. 150 символов максимум.'
     )
 
@@ -207,7 +209,7 @@ class Favorite(models.Model):
 
 
 class Subscription(models.Model):
-    user = models.ForeignKey(
+    subscriber = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
         related_name='subscriber'
@@ -221,11 +223,11 @@ class Subscription(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'author'],
+                fields=['subscriber', 'author'],
                 name='unique_subscription'
             ),
             models.CheckConstraint(
-                check=~models.Q(user=models.F('author')),
+                check=~models.Q(subscriber=models.F('author')),
                 name='prevent_self_subscription'
             )
         ]
