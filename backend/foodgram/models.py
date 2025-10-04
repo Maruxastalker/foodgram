@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
 
+from .validators import validate_username
+
 
 class MinValue:
     COOKING_TIME = 1
@@ -35,6 +37,12 @@ class CustomUser(AbstractUser):
         'email address',
         unique=True,
         help_text='Обязательное поле. 254 символа максимум.'
+    )
+    username = models.CharField(
+        verbose_name='Уникальный юзернейм',
+        max_length=150,
+        unique=True,
+        validators=(validate_username,),
     )
     avatar = models.ImageField(
         upload_to='users/avatars/',
