@@ -19,7 +19,7 @@ from .models import (
     Favorite,
     Ingredient,
     Recipe,
-    IngredientAmount,
+    RecipeIngredient,
     ShoppingCart,
     Subscription,
     Tag,
@@ -150,7 +150,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False)
     def download_shopping_cart(self, request):
         ingredients = (
-            IngredientAmount.objects.filter(
+            RecipeIngredient.objects.filter(
                 recipe__shoppingcarts__user=request.user
             )
             .select_related('recipe', 'ingredient')
@@ -206,6 +206,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             pk=pk,
             model=ShoppingCart,
         )
+
+    def handle_exception(self, exc):
+        if isinstance(exc, serializers.ValidationError):
+            return Response(exc.detail, status=HTTPStatus.BAD_REQUEST)
+        return super().handle_exception(exc)
 
 
 def recipe_shared_link(request, slug):

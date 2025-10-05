@@ -24,7 +24,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['84.201.136.206', 'localhost', '127.0.0.1', 'foodgram-mark.myvnc.com', 'backend']
 
 
-AUTH_USER_MODEL = 'foodgram.CustomUser'
+AUTH_USER_MODEL = 'foodgram.User'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -74,23 +74,23 @@ WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'django'),
-        'USER': os.getenv('POSTGRES_USER', 'django'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', 5432)
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('POSTGRES_DB', 'django'),
+#         'USER': os.getenv('POSTGRES_USER', 'django'),
+#         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+#         'HOST': os.getenv('DB_HOST', ''),
+#         'PORT': os.getenv('DB_PORT', 5432)
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
 
 
 # Password validation
@@ -131,7 +131,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = BASE_DIR / 'backend_static'
+STATIC_ROOT = 'backend_static'
 
 MEDIA_URL = '/media/'
 
@@ -146,32 +146,35 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
-
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'DEFAULT_PAGINATION_CLASS': 'foodgram.pagination.LimitPageNumberPagination',
+    'PAGE_SIZE': 6,
 }
 
 DJOSER = {
+    'HIDE_USERS': False,
     'SERIALIZERS': {
         'user': 'foodgram.serializers.UserSerializer',
         'current_user': 'foodgram.serializers.UserSerializer',
-        'user_create': 'foodgram.serializers.UserCreateSerializer',
     },
     'PERMISSIONS': {
-        'user_list': ['rest_framework.permissions.AllowAny'],
-        'user': ['rest_framework.permissions.AllowAny'],
-        'user_create': ['rest_framework.permissions.AllowAny'],
-        'token_create': ['rest_framework.permissions.AllowAny'],
-        'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
+        'user': ('djoser.permissions.CurrentUserOrAdminOrReadOnly',),
+        'user_list': ('rest_framework.permissions.AllowAny',),
     },
-    'LOGIN_FIELD': 'email',  # или 'username'
-    'HIDE_USERS': False,
 }
+
+CORS_URLS_REGEX = r'^/api/.*$'
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+
+EMAIL_FILE_PATH = './email'
 
 USERNAME_PATTERN = r'[\w.@+-]'
 
 FORBIDDEN_USERNAMES = ('me',)
+
+AVATARS_PATH = 'users/avatars'
+RECIPES_IMAGES_PATH = 'recipes/images/'

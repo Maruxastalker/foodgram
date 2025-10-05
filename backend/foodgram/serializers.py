@@ -3,7 +3,7 @@ from collections import Counter
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import transaction
-from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
+from djoser.serializers import UserSerializer as DjoserUserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -13,7 +13,7 @@ from .models import (
     Ingredient,
     MinValue,
     Recipe,
-    IngredientAmount,
+    RecipeIngredient,
     ShoppingCart,
     Subscription,
     Tag,
@@ -23,32 +23,24 @@ from .models import (
 User = get_user_model()
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(DjoserUserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = (
-            'id',
-            'email',
-            'username',
-            'first_name',
-            'last_name',
-            'avatar',
-            'is_subscribed'
-        )
-        read_only_fields = ('id', 'is_subscribed')
+        fields = (*DjoserUserSerializer.Meta.fields, 'avatar', 'is_subscribed')
 
     def get_is_subscribed(self, author):
         user = self.context.get('request').user
-        if not user or not user.is_authenticated:
-            return False
-        return Subscription.objects.filter(
-            author=author, subscriber=user
-        ).exists()
+        return (
+            user.is_authenticated
+            and Subscription.objects.filter(
+                author=author, subscriber=user
+            ).exists()
+        )
 
 
-class UserCreateSerializer(BaseUserCreateSerializer):
+class UserCreateSerializer(DjoserUserSerializer):
     first_name = serializers.CharField(required=True, max_length=150)
     last_name = serializers.CharField(required=True, max_length=150)
 
@@ -106,7 +98,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = IngredientAmount
+        model = RecipeIngredient
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
@@ -114,7 +106,7 @@ class ReadRecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True)
     ingredients = RecipeIngredientSerializer(
-        source='ingredient_amounts', many=True
+        source='recipeingredients', many=True
     )
     is_in_shopping_cart = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
@@ -203,8 +195,8 @@ class WriteRecipeSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _save_ingredients(recipe, ingredients):
-        IngredientAmount.objects.bulk_create(
-            IngredientAmount(
+        RecipeIngredient.objects.bulk_create(
+            RecipeIngredient(
                 recipe=recipe,
                 ingredient=ingredient['ingredient'],
                 amount=ingredient['amount'],
