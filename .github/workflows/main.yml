@@ -160,9 +160,3 @@ jobs:
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate --no-input
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
             
-            # Проверяем права доступа
-            sudo docker compose -f docker-compose.production.yml exec backend chmod -R 755 /backend_static/
-            sudo docker compose -f docker-compose.production.yml exec frontend chmod -R 755 /frontend_static/
-            
-            # Перезапускаем nginx для применения изменений
-            sudo docker compose -f docker-compose.production.yml restart gateway
