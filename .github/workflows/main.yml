@@ -159,6 +159,7 @@ jobs:
             # Создаем статику бэкенда
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
+            sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/backend_static/* /backend_static/
             
             # Проверяем права доступа
             sudo docker compose -f docker-compose.production.yml exec backend chmod -R 755 /backend_static/
