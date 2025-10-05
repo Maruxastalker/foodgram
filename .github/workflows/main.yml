@@ -121,54 +121,54 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_gateway:latest
 
-deploy:
-  runs-on: ubuntu-latest
-  needs: 
-    - build_backend_and_push_to_docker_hub
-    - build_frontend_and_push_to_docker_hub
-    - build_gateway_and_push_to_docker_hub
-  
-  steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+  deploy:
+    runs-on: ubuntu-latest
+    needs: 
+      - build_backend_and_push_to_docker_hub
+      - build_frontend_and_push_to_docker_hub
+      - build_gateway_and_push_to_docker_hub
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-    - name: Copy docker-compose.production.yml via ssh
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USER }}
-        key: ${{ secrets.SSH_KEY }}
-        passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        source: "docker-compose.production.yml"
-        target: "foodgram/"
+      - name: Copy docker-compose.production.yml via ssh
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          source: "docker-compose.production.yml"
+          target: "foodgram/"
 
-    - name: Executing remote ssh commands to deploy
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USER }}
-        key: ${{ secrets.SSH_KEY }}
-        passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        script: |
-          cd foodgram
-          sudo docker compose -f docker-compose.production.yml pull
-          sudo docker compose -f docker-compose.production.yml down
-          
-          # Запускаем ТОЛЬКО базу данных и бэкенд сначала
-          sudo docker compose -f docker-compose.production.yml up -d db backend
-          sleep 15  # Ждем пока база и бэкенд полностью поднимутся
-          
-          # Выполняем миграции ДО запуска gateway
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
-          
-          # Запускаем остальные сервисы
-          sudo docker compose -f docker-compose.production.yml up -d
-          sleep 10
-          
-          # Собираем статику
-          sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
-          sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/backend_static/* /backend_static/
-          
-          # Проверяем права доступа
-          sudo docker compose -f docker-compose.production.yml exec backend chmod -R 755 /backend_static/
-          sudo docker compose -f docker-compose.production.yml exec frontend chmod -R 755 /frontend_static/
+      - name: Executing remote ssh commands to deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: |
+            cd foodgram
+            sudo docker compose -f docker-compose.production.yml pull
+            sudo docker compose -f docker-compose.production.yml down
+            
+            # Запускаем ТОЛЬКО базу данных и бэкенд сначала
+            sudo docker compose -f docker-compose.production.yml up -d db backend
+            sleep 15  # Ждем пока база и бэкенд полностью поднимутся
+            
+            # Выполняем миграции ДО запуска gateway
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+            
+            # Запускаем остальные сервисы
+            sudo docker compose -f docker-compose.production.yml up -d
+            sleep 10
+            
+            # Собираем статику
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
+            sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/backend_static/* /backend_static/
+            
+            # Проверяем права доступа
+            sudo docker compose -f docker-compose.production.yml exec backend chmod -R 755 /backend_static/
+            sudo docker compose -f docker-compose.production.yml exec frontend chmod -R 755 /frontend_static/
