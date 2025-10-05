@@ -153,22 +153,16 @@ jobs:
             cd foodgram
             sudo docker compose -f docker-compose.production.yml pull
             sudo docker compose -f docker-compose.production.yml down
-            
-            # Запускаем ТОЛЬКО базу данных и бэкенд сначала
-            sudo docker compose -f docker-compose.production.yml up -d db backend
-            sleep 15  # Ждем пока база и бэкенд полностью поднимутся
-            
-            # Выполняем миграции ДО запуска gateway
-            sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
-            
-            # Запускаем остальные сервисы
             sudo docker compose -f docker-compose.production.yml up -d
-            sleep 10
+            sleep 10  # Даем контейнерам время подняться
             
-            # Собираем статику
+            # Создаем статику бэкенда
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate --no-input
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
-            sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/backend_static/* /backend_static/
             
             # Проверяем права доступа
             sudo docker compose -f docker-compose.production.yml exec backend chmod -R 755 /backend_static/
             sudo docker compose -f docker-compose.production.yml exec frontend chmod -R 755 /frontend_static/
+            
+            # Перезапускаем nginx для применения изменений
+            sudo docker compose -f docker-compose.production.yml restart gateway
