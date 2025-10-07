@@ -6,6 +6,7 @@ from django.db import transaction
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 
 from .models import (
     Error,
@@ -125,7 +126,9 @@ class ReadRecipeSerializer(serializers.ModelSerializer):
             'is_in_shopping_cart',
             'is_favorited',
         )
-        read_only_fields = fields
+        read_only_fields = (
+            'id', 'author', 'is_in_shopping_cart', 'is_favorited'
+        )
 
     def get_is_in_shopping_cart(self, recipe):
         user = self.context.get('request').user
@@ -156,6 +159,15 @@ class WriteRecipeSerializer(serializers.ModelSerializer):
         required=True,
     )
     image = Base64ImageField(allow_empty_file=False, required=True)
+    cooking_time = serializers.IntegerField(
+        validators=[
+            MinValueValidator(
+                limit_value=MinValue.COOKING_TIME,
+                message=Error.COOKING_TIME
+            )
+        ],
+        required=True
+    )
 
     class Meta:
         model = Recipe
@@ -173,7 +185,7 @@ class WriteRecipeSerializer(serializers.ModelSerializer):
         counts = Counter(array)
         duplicates = {item for item, count in counts.items() if count > 1}
         if duplicates:
-            raise serializers.ValidationError(
+            raise ValidationError(
                 {field_name: Error.DUPLICATES.format(duplicates)}
             )
 
@@ -190,7 +202,7 @@ class WriteRecipeSerializer(serializers.ModelSerializer):
 
     def validate_image(self, image):
         if not image:
-            raise serializers.ValidationError(Error.NO_IMAGE)
+            raise ValidationError(Error.NO_IMAGE)
         return image
 
     @staticmethod
@@ -222,7 +234,11 @@ class WriteRecipeSerializer(serializers.ModelSerializer):
         return super().update(recipe, validated_data)
 
     def to_representation(self, recipe):
-        return ReadRecipeSerializer(recipe, context=self.context).data
+        context = self.context or {}
+        return ReadRecipeSerializer(
+            recipe,
+            context=context
+        ).data
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
