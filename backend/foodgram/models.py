@@ -253,10 +253,10 @@ class Recipe(models.Model):
         return reverse('recipes:short_link', args=[self.pk])
 
     @staticmethod
-    def generate_short(self):
-        for _ in range(self.MAX_ATTEMPTS):
+    def generate_short():
+        for _ in range(Recipe.MAX_ATTEMPTS):
             short = ''.join(
-                choices(self.AVAILIBLE_CHARS, k=FieldLength.SHORT_URL_CODE)
+                choices(Recipe.AVAILIBLE_CHARS, k=FieldLength.SHORT_URL_CODE)
             )
             if not Recipe.objects.filter(short_url_code=short).exists():
                 return short
