@@ -146,19 +146,13 @@ class ReadRecipeSerializer(serializers.ModelSerializer):
 
 
 class WriteRecipeSerializer(serializers.ModelSerializer):
-    ingredients = serializers.ListField(
-        child=RecipeIngredientSerializer(),
-        allow_empty=False,
-        required=True,
+    ingredients = RecipeIngredientSerializer(many=True, required=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True,
+        required=True
     )
-    tags = serializers.ListField(
-        child=serializers.PrimaryKeyRelatedField(
-            queryset=Tag.objects.all(),
-        ),
-        allow_empty=False,
-        required=True,
-    )
-    image = Base64ImageField(allow_empty_file=False, required=True)
+    image = Base64ImageField(required=True)
     cooking_time = serializers.IntegerField(
         validators=[
             MinValueValidator(
@@ -172,73 +166,123 @@ class WriteRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'ingredients',
+            'id',
             'tags',
-            'image',
+            'author',
+            'ingredients',
             'name',
+            'image',
             'text',
             'cooking_time',
         )
+        read_only_fields = ('id', 'author')
 
-    @staticmethod
-    def _check_duplicates(array, field_name):
-        counts = Counter(array)
-        duplicates = {item for item, count in counts.items() if count > 1}
+    def validate_ingredients(self, value):
+        if not value:
+            raise ValidationError(Error.NO_INGREDIENTS)
+
+        ingredient_ids = [item['ingredient'].id for item in value]
+        duplicates = [item for item, count in Counter(
+            ingredient_ids
+        ).items() if count > 1]
         if duplicates:
+            raise ValidationError(Error.DUPLICATES.format(duplicates))
+
+        # Проверка существования ингредиентов
+        existing_ids = set(Ingredient.objects.filter(
+            id__in=ingredient_ids
+        ).values_list('id', flat=True))
+        missing_ids = set(ingredient_ids) - existing_ids
+        if missing_ids:
             raise ValidationError(
-                {field_name: Error.DUPLICATES.format(duplicates)}
+                f"Ингредиенты с id {missing_ids} не существуют"
             )
 
-    def validate_tags(self, tags):
-        self._check_duplicates([tag.id for tag in tags], 'tags')
-        return tags
+        # Проверка количества ингредиентов
+        for ingredient_data in value:
+            if ingredient_data['amount'] < 1:
+                raise ValidationError(
+                    "Количество ингредиента должно быть не менее 1"
+                )
 
-    def validate_ingredients(self, ingredients):
-        self._check_duplicates(
-            [item['ingredient'].id for item in ingredients],
-            'ingredients',
+        return value
+
+    def validate_tags(self, value):
+        if not value:
+            raise ValidationError(Error.NO_TAGS)
+
+        tag_ids = [tag.id for tag in value]
+        duplicates = [item for item, count in Counter(
+            tag_ids
+        ).items() if count > 1]
+        if duplicates:
+            raise ValidationError(Error.DUPLICATES.format(duplicates))
+
+        # Проверка существования тегов
+        existing_ids = set(
+            Tag.objects.filter(id__in=tag_ids).values_list('id', flat=True)
         )
-        return ingredients
+        missing_ids = set(tag_ids) - existing_ids
+        if missing_ids:
+            raise ValidationError(f"Теги с id {missing_ids} не существуют")
 
-    def validate_image(self, image):
-        if not image:
-            raise ValidationError(Error.NO_IMAGE)
-        return image
+        return value
 
-    @staticmethod
-    def _save_ingredients(recipe, ingredients):
-        RecipeIngredient.objects.bulk_create(
-            RecipeIngredient(
-                recipe=recipe,
-                ingredient=ingredient['ingredient'],
-                amount=ingredient['amount'],
-            )
-            for ingredient in ingredients
-        )
+    def validate(self, data):
+        # Дополнительная валидация на уровне всего объекта
+        if 'ingredients' not in data or not data['ingredients']:
+            raise ValidationError({'ingredients': Error.NO_INGREDIENTS})
+
+        if 'tags' not in data or not data['tags']:
+            raise ValidationError({'tags': Error.NO_TAGS})
+
+        return data
 
     @transaction.atomic
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
-        recipe = super().create(validated_data)
-        self._save_ingredients(recipe, ingredients_data)
+        tags_data = validated_data.pop('tags')
+
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.tags.set(tags_data)
+
+        recipe_ingredients = []
+        for ingredient_data in ingredients_data:
+            recipe_ingredients.append(
+                RecipeIngredient(
+                    recipe=recipe,
+                    ingredient=ingredient_data['ingredient'],
+                    amount=ingredient_data['amount']
+                )
+            )
+
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
         return recipe
 
     @transaction.atomic
-    def update(self, recipe, validated_data):
-        try:
-            new_ingredients = validated_data.pop('ingredients')
-            recipe.ingredients.clear()
-            self._save_ingredients(recipe, new_ingredients)
-        except KeyError:
-            pass
-        return super().update(recipe, validated_data)
+    def update(self, instance, validated_data):
+        ingredients_data = validated_data.pop('ingredients', None)
+        tags_data = validated_data.pop('tags', None)
 
-    def to_representation(self, recipe):
-        context = self.context or {}
-        return ReadRecipeSerializer(
-            recipe,
-            context=context
-        ).data
+        instance = super().update(instance, validated_data)
+
+        if tags_data is not None:
+            instance.tags.set(tags_data)
+
+        if ingredients_data is not None:
+            instance.ingredients.clear()
+            recipe_ingredients = []
+            for ingredient_data in ingredients_data:
+                recipe_ingredients.append(
+                    RecipeIngredient(
+                        recipe=instance,
+                        ingredient=ingredient_data['ingredient'],
+                        amount=ingredient_data['amount']
+                    )
+                )
+            RecipeIngredient.objects.bulk_create(recipe_ingredients)
+
+        return instance
 
 
 class ShortRecipeSerializer(serializers.ModelSerializer):

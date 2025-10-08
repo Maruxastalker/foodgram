@@ -69,26 +69,26 @@ class FieldLength:
 
 
 class Error:
-    COOKING_TIME = f'Не менее {MinValue.COOKING_TIME} мин. приготовления'
-    AMOUNT = f'Не менее {MinValue.AMOUNT} ед. ингредиента'
-    ALREADY_IN_SHOPPING_CART = 'Рецепт уже есть в списке покупок'
-    ALREADY_FAVORITED = 'Рецепт уже есть в избранном'
-    NOT_IN_SHOPPING_CART = 'Рецепта нет в списке покупок'
-    NOT_FAVORITED = 'Рецепта нет в избранном'
-    ALREADY_SUBSCRIBED = 'Вы уже подписаны на этого автора'
-    CANNOT_SUBSCRIBE_TO_YOURSELF = 'Нельзя подписаться на самого себя'
-    DUPLICATES = 'Дубликаты: {}'
-    NO_IMAGE = 'Поле "image" не может быть пустым'
-    NOT_SUBSCRIBED = 'Вы не подписаны на этого автора'
-    NO_TAGS = 'Нужен хотя бы один тег'
-    NO_INGREDIENTS = 'Рецепт не может обойтись без продуктов'
-    NOT_EXIST = 'Рецепт не существует'
-    SHORT_URL_CODE = 'Не удалось сгенерировать уникальный код'
+    COOKING_TIME = f'Мин. время приготовления: {MinValue.COOKING_TIME} мин.'
+    AMOUNT = f'Минимальное количество ингредиента: {MinValue.AMOUNT} ед.'
+    ALREADY_IN_SHOPPING_CART = 'Рецепт уже добавлен в список покупок'
+    ALREADY_FAVORITED = 'Рецепт уже находится в избранном'
+    NOT_IN_SHOPPING_CART = 'Рецепт отсутствует в списке покупок'
+    NOT_FAVORITED = 'Рецепт отсутствует в избранном'
+    ALREADY_SUBSCRIBED = 'Подписка на данного автора уже оформлена'
+    CANNOT_SUBSCRIBE_TO_YOURSELF = 'Нельзя подписаться на собственный аккаунт'
+    DUPLICATES = 'Обнаружены повторяющиеся элементы: {}'
+    NO_IMAGE = 'Изображение обязательно для загрузки'
+    NOT_SUBSCRIBED = 'Подписка на данного автора отсутствует'
+    TAGS_REQUIRED = 'Необходимо указать как минимум один тег'
+    INGREDIENTS_REQUIRED = 'Необходимо добавить ингредиенты для рецепта'
+    NOT_EXIST = 'Запрашиваемый рецепт не существует'
+    SHORT_URL_CODE = 'Ошибка создания уникального кода ссылки'
     SHORT_URL_CODE_GEN = (
-        'Превышено количество попыток генерации short_url_code.'
+        'Превышено максимальное количество попыток создания короткой ссылки.'
     )
-    NO_TAGS = 'Нужен хотя бы один тег'
-    NO_INGREDIENTS = 'Рецепт не может обойтись без продуктов'
+    MISSING_TAGS = 'Укажите хотя бы один тег для рецепта'
+    MISSING_INGREDIENTS = 'Добавьте ингредиенты для создания рецепта'
 
 
 class User(AbstractUser):

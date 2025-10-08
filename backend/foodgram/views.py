@@ -139,6 +139,45 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def get_permissions(self):
+        # Для создания рецепта и специальных действий требуется аутентификация
+        if self.action in [
+            'create', 'favorite', 'shopping_cart', 'download_shopping_cart'
+        ]:
+            return [IsAuthenticated()]
+        return super().get_permissions()
+
+    def update(self, request, *args, **kwargs):
+        # Явная проверка прав доступа перед обновлением
+        instance = self.get_object()
+
+        # Проверка аутентификации
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': 'Требуется аутентификация'},
+                status=HTTPStatus.UNAUTHORIZED
+            )
+
+        # Проверка авторства
+        if instance.author != request.user:
+            return Response(
+                {'error': 'У вас нет прав для редактирования этого рецепта'},
+                status=HTTPStatus.FORBIDDEN
+            )
+
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def handle_exception(self, exc):
+        if isinstance(exc, (Recipe.DoesNotExist, User.DoesNotExist)):
+            return Response(
+                {'error': 'Объект не найден'},
+                status=HTTPStatus.NOT_FOUND
+            )
+        return super().handle_exception(exc)
+
     @action(detail=True, url_path='get-link')
     def get_link(self, request, pk=None):
         short_url_code = get_object_or_404(Recipe, pk=pk).short_url_code
@@ -149,6 +188,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False)
     def download_shopping_cart(self, request):
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': 'Требуется аутентификация'},
+                status=HTTPStatus.UNAUTHORIZED
+            )
+
         ingredients = (
             RecipeIngredient.objects.filter(
                 recipe__shoppingcarts__user=request.user
@@ -171,23 +216,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
             content_type='text/plain',
         )
 
-    @staticmethod
     def _favorite_shopping_cart_logic(
-        request, error_message_add, pk, model,
+        self, request, error_message_add, pk, model
     ):
+        user = request.user
         recipe = get_object_or_404(Recipe, pk=pk)
+
         if request.method == 'DELETE':
-            get_object_or_404(model, recipe=recipe, user=request.user).delete()
+            obj = get_object_or_404(model, user=user, recipe=recipe)
+            obj.delete()
             return Response(status=HTTPStatus.NO_CONTENT)
-        item, created = model.objects.get_or_create(
-            user=request.user, recipe=recipe
-        )
-        if not created:
-            raise ValidationError(dict(error=error_message_add))
-        return Response(
-            serializers.ShortRecipeSerializer(recipe).data,
-            status=HTTPStatus.CREATED,
-        )
+
+        if model.objects.filter(user=user, recipe=recipe).exists():
+            return Response(
+                {'error': error_message_add},
+                status=HTTPStatus.BAD_REQUEST
+            )
+
+        obj = model.objects.create(user=user, recipe=recipe)
+        serializer = serializers.ShortRecipeSerializer(recipe)
+        return Response(serializer.data, status=HTTPStatus.CREATED)
 
     @action(detail=True, methods=('POST', 'DELETE'))
     def favorite(self, request, pk):
@@ -206,11 +254,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             pk=pk,
             model=ShoppingCart,
         )
-
-    def handle_exception(self, exc):
-        if isinstance(exc, serializers.ValidationError):
-            return Response(exc.detail, status=HTTPStatus.BAD_REQUEST)
-        return super().handle_exception(exc)
 
 
 def recipe_shared_link(request, slug):

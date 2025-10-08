@@ -159,6 +159,7 @@ DJOSER = {
         'user': 'foodgram.serializers.UserSerializer',
         'current_user': 'foodgram.serializers.UserSerializer',
     },
+    'TOKEN_MODEL': 'rest_framework.authtoken.models.Token',
     'PERMISSIONS': {
         'user': ('djoser.permissions.CurrentUserOrAdminOrReadOnly',),
         'user_list': ('rest_framework.permissions.AllowAny',),
