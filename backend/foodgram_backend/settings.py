@@ -137,6 +137,9 @@ MEDIA_URL = '/media/'
 
 MEDIA_ROOT = '/media/'
 
+AVATARS_PATH = 'users/avatars'
+RECIPES_IMAGES_PATH = 'recipes/images/'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
@@ -166,16 +169,6 @@ DJOSER = {
     },
 }
 
-CORS_URLS_REGEX = r'^/api/.*$'
-
-
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
 EMAIL_FILE_PATH = './email'
-
-USERNAME_PATTERN = r'[\w.@+-]'
-
-FORBIDDEN_USERNAMES = ('me',)
-
-AVATARS_PATH = 'users/avatars'
-RECIPES_IMAGES_PATH = 'recipes/images/'
